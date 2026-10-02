@@ -153,6 +153,7 @@ fun MainScreen() {
                 UpdatesCard()
                 PrivacyCard()
                 OutlinedButton(onClick = { Onboarding.restart() }) { Text("Show the tour again") }
+                StartOverButton()
               }
           }
         }
