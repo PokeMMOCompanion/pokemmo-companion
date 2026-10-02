@@ -102,6 +102,8 @@ fun MainScreen() {
   }
   val startCapture = rememberCaptureStarter()
   DexTheme {
+    // Silent unless a newer release is out.
+    AutoUpdatePrompt()
     DexFrame(
       status = status,
       lights = Triple(state.screenState == ScreenState.BATTLE, state.partyReading, state.running),
@@ -143,6 +145,7 @@ fun MainScreen() {
               ThemePicker()
               SpritesCard()
               AlertsCard()
+              UpdatesCard()
               PrivacyCard()
             }
         }

@@ -33,8 +33,9 @@ Screen capture sounds scary, so here is exactly what happens:
   app never saves screenshots or recordings and never uploads what's on your screen.
 - **No account, login, ads or tracking.** The app never asks for your PokeMMO login and has no way to control the
   game.
-- **Internet is only used** when you tap **Download** (Pokémon sprites from PokemonDB) or open **GTL prices** (PokeMMO
-  Hub's price API). Neither request contains anything from your screen.
+- **Internet is only used** when you tap **Download** (Pokémon sprites from PokemonDB), open **GTL prices** (PokeMMO
+  Hub's price API), or to **check for app updates** on this GitHub page (when the app opens, at most twice a day; can
+  be turned off in Settings → Updates). None of these requests contain anything from your screen.
 - **Text recognition runs on the phone** (Google ML Kit, bundled model). Per
   [Google's ML Kit data disclosure](https://developers.google.com/ml-kit/android-data-disclosure), ML Kit sends Google
   anonymous performance stats (phone model, OS version, timing), never the images or the text it reads.
@@ -56,7 +57,8 @@ The source code is right here if you want to check.
 
 Built for a 1920×1080 top screen running PokeMMO in landscape. Android 10 or newer, arm64.
 
-Updating: install the newer APK over the old one; your data is kept.
+Updating: the app tells you when a new version is out (Settings → Updates). Install the newer APK over the old one;
+your data is kept.
 
 ## Credits
 

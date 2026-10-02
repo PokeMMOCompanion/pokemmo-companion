@@ -32,8 +32,8 @@ fun PrivacyCard() {
         style = small,
       )
       Text(
-        "Internet is only used when you tap Download (Pokémon sprites from PokemonDB) or open GTL prices (PokeMMO " +
-          "Hub). Google's on-device text recognition (ML Kit) sends Google anonymous performance stats like phone " +
+        "Internet is only used when you tap Download (Pokémon sprites from PokemonDB), open GTL prices (PokeMMO " +
+          "Hub), or to check GitHub for a new version of this app (can be turned off under Updates). Google's on-device text recognition (ML Kit) sends Google anonymous performance stats like phone " +
           "model and timing, never the screen or its text.",
         style = small,
         color = DexColors.InkMuted,
