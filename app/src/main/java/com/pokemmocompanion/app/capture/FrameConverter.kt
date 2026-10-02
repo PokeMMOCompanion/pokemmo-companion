@@ -60,14 +60,6 @@ class FrameConverter {
     return Bitmap.createBitmap(bmp, x, y, w, h)
   }
 
-  /** Full-resolution copy of the most recently converted frame, or null if none yet. */
-  fun copyLatestFrame(): Bitmap? {
-    val bmp = padded ?: return null
-    val cropped = Bitmap.createBitmap(bmp, 0, 0, lastWidth, lastHeight)
-    // createBitmap may return the source itself when no cropping is needed; never hand out the reused buffer.
-    return if (cropped === bmp) bmp.copy(Bitmap.Config.ARGB_8888, false) else cropped
-  }
-
   /** Copies the frame into a reusable bitmap. Its width may exceed the frame width because of row padding. */
   private fun copyFull(image: Image): Bitmap {
     val plane = image.planes[0]

@@ -85,7 +85,6 @@ import com.pokemmocompanion.app.party.SummaryTabs
 import com.pokemmocompanion.app.party.ValueBox
 import java.io.File
 import kotlin.math.roundToInt
-import java.util.concurrent.Executors
 
 /**
  * Foreground service that holds the MediaProjection and receives frames through an ImageReader.
@@ -99,7 +98,6 @@ class CaptureService : Service() {
     private const val EXTRA_RESULT_CODE = "resultCode"
     private const val EXTRA_RESULT_DATA = "resultData"
     private const val ACTION_STOP = "com.pokemmocompanion.app.STOP_CAPTURE"
-    private const val ACTION_SAVE_FRAME = "com.pokemmocompanion.app.SAVE_FRAME"
     private const val CHANNEL_ID = "capture"
     private const val NOTIFICATION_ID = 1
     private const val PROCESS_INTERVAL_MS = 500L // ~2 frames per second
@@ -127,9 +125,6 @@ class CaptureService : Service() {
       ContextCompat.startForegroundService(context, intent)
     }
 
-    fun saveFrame(context: Context) {
-      context.startService(Intent(context, CaptureService::class.java).setAction(ACTION_SAVE_FRAME))
-    }
 
     fun stop(context: Context) {
       context.startService(Intent(context, CaptureService::class.java).setAction(ACTION_STOP))
@@ -142,7 +137,6 @@ class CaptureService : Service() {
   private var virtualDisplay: VirtualDisplay? = null
   private var imageReader: ImageReader? = null
   private val converter = FrameConverter()
-  private val saveExecutor = Executors.newSingleThreadExecutor()
   private val tracker = BattleTracker()
   private val identifier = BattleIdentifier()
   /** Battle-message slots are filled from the current party and opponents (see [BattleKnowledge]). */
@@ -177,7 +171,6 @@ class CaptureService : Service() {
   private var lastSummaryKey: Pair<Int, SummaryPageKind>? = null
   private var lastSummaryComplete = false
   private var incompleteReads = 0
-  private val debugFramesSaved = mutableSetOf<Pair<Int, SummaryPageKind>>()
   private lateinit var nameReader: NameReader
   private val encounterLog by lazy { EncounterLog(File(filesDir, "encounters.csv")) }
   private val places by lazy { Places(GameDataLoader.spawns(this)) }
@@ -238,10 +231,6 @@ class CaptureService : Service() {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     if (intent?.action == ACTION_STOP) {
       stopSelf()
-      return START_NOT_STICKY
-    }
-    if (intent?.action == ACTION_SAVE_FRAME) {
-      if (projection != null) handler.post(::saveLatestFrame)
       return START_NOT_STICKY
     }
 
@@ -677,9 +666,6 @@ class CaptureService : Service() {
     DebugLog.log("party", "slot ${slot + 1} $kind complete=${page.isComplete} $result read=$texts -> $page")
     DebugLog.log("party", "slot ${slot + 1} stored: ${PartyRepository.party.value.members[slot]}")
 
-    if (!page.isComplete && ++incompleteReads == 3 && debugFramesSaved.add(key)) {
-      saveFrame("party_slot${slot + 1}_$kind") // ground truth for whatever didn't read
-    }
     val note =
       when (result) {
         ApplyResult.NEEDS_INFO -> " — open the first tab (Pokédex/Name) first"
@@ -994,30 +980,6 @@ class CaptureService : Service() {
     }
   }
 
-  /** Runs on the capture thread, where the converter's buffer lives. PNG encoding happens on [saveExecutor]. */
-  private fun saveLatestFrame() = saveFrame("frame")
-
-  private fun saveFrame(prefix: String) {
-    val frame = converter.copyLatestFrame()
-    if (frame == null) {
-      CaptureRepository.update { it.copy(error = "No frame captured yet") }
-      return
-    }
-    CaptureRepository.update { it.copy(saving = true, error = null) }
-    saveExecutor.execute {
-      try {
-        val file = FrameSaver.save(applicationContext, frame, prefix)
-        DebugLog.log("frame", "Saved ${file.name}")
-        CaptureRepository.update { it.copy(saving = false, savedCount = it.savedCount + 1, lastSavedName = file.name) }
-      } catch (e: Exception) {
-        Log.e(TAG, "Failed to save frame", e)
-        CaptureRepository.update { it.copy(saving = false, error = "Save failed: ${e.message}") }
-      } finally {
-        frame.recycle()
-      }
-    }
-  }
-
   override fun onDestroy() {
     stopping = true
     // Release everything on the capture thread, after the frame it may be processing: closing the ImageReader
@@ -1032,7 +994,6 @@ class CaptureService : Service() {
       nameReader.close()
     }
     thread.quitSafely()
-    saveExecutor.shutdown() // lets a save in progress finish
     DebugLog.log("capture", "Capture stopped")
     DebugLog.endSession()
     CaptureRepository.update {

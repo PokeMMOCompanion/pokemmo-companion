@@ -14,7 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Plain-text log of what the app reads and decides, so it can be checked on a PC without screenshots.
+ * Plain-text log of what the app reads and decides, for bug reports. **Off unless the user turns it on** (Settings →
+ * Diagnostic log): while off, nothing is written anywhere, not even to Android's system log.
  *
  * One file per capture session: Android/data/com.pokemmocompanion.app/files/logs/companion-log_<date>_<time>.txt
  * (the newest [KEEP_FILES] are kept). Windows sees phone files through Android's media index, which doesn't notice a
@@ -40,15 +41,35 @@ object DebugLog {
   private val _path = MutableStateFlow<String?>(null)
   val path: StateFlow<String?> = _path.asStateFlow()
 
+  private const val PREFS = "diagnostics"
+  private const val KEY = "log"
+  private val _enabled = MutableStateFlow(false)
+  val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
+
   fun init(context: Context) {
     if (dir != null) return
     app = context.applicationContext
-    dir = File(context.getExternalFilesDir(null) ?: context.filesDir, "logs").apply { mkdirs() }
+    dir = File(context.getExternalFilesDir(null) ?: context.filesDir, "logs")
+    _enabled.value = context.getSharedPreferences(PREFS, 0).getBoolean(KEY, false)
+  }
+
+  /** Turning it off also deletes the log files already written. */
+  fun setEnabled(on: Boolean) {
+    _enabled.value = on
+    app?.getSharedPreferences(PREFS, 0)?.edit()?.putBoolean(KEY, on)?.apply()
+    if (!on) {
+      writer.execute {
+        file = null
+        _path.value = null
+        dir?.listFiles()?.forEach { it.delete() }
+      }
+    }
   }
 
   /** Starts a new log file (called when capture starts). */
   fun startSession() {
-    val d = dir ?: return
+    if (!_enabled.value) return
+    val d = dir?.apply { mkdirs() } ?: return
     writer.execute {
       val f = File(d, "companion-log_${stamp.format(Date())}.txt")
       file = f
@@ -66,11 +87,12 @@ object DebugLog {
   }
 
   fun log(tag: String, message: String) {
+    if (!_enabled.value) return
     Log.i("Companion/$tag", message)
     val line = "${time.format(Date())} [$tag] $message"
     _recent.value = (_recent.value + line).takeLast(RECENT_LINES)
     writer.execute {
-      val f = file ?: dir?.let { File(it, "companion-log_${stamp.format(Date())}.txt") }?.also {
+      val f = file ?: dir?.apply { mkdirs() }?.let { File(it, "companion-log_${stamp.format(Date())}.txt") }?.also {
         file = it
         _path.value = it.absolutePath
       } ?: return@execute

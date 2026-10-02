@@ -143,6 +143,7 @@ fun MainScreen() {
               ThemePicker()
               SpritesCard()
               AlertsCard()
+              PrivacyCard()
             }
         }
       }

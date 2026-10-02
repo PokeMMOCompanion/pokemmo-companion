@@ -64,9 +64,6 @@ data class CaptureState(
   val revealed: Map<String, Revealed> = emptyMap(),
   /** Where the player is: from the pause menu header, or worked out from recent wild encounters. */
   val here: Here? = null,
-  val saving: Boolean = false,
-  val savedCount: Int = 0,
-  val lastSavedName: String? = null,
   val error: String? = null,
 )
 
