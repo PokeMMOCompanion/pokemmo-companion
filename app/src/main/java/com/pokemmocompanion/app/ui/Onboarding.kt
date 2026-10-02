@@ -64,7 +64,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /** Steps of the first-run tour. */
-enum class TourStep { CAPTURE, PARTY_TILE, PARTY_READ, SPRITES, THEME, DONE }
+enum class TourStep { CAPTURE, SPRITES, THEME, TIPS, PARTY }
 
 /** The first-run tour: shown once (until finished or skipped), and again from Settings. */
 object Onboarding {
@@ -102,17 +102,17 @@ fun Modifier.tourTarget(name: String) = onGloballyPositioned { Onboarding.target
  * Tapping inside the spotlight does what tapping the control would.
  */
 @Composable
-fun TourOverlay(capturing: Boolean, partyCount: Int, onStartCapture: () -> Unit, onOpenParty: () -> Unit, onTheme: (Int) -> Unit) {
+fun TourOverlay(capturing: Boolean, onStartCapture: () -> Unit, onOpenParty: () -> Unit, onTheme: (Int) -> Unit) {
   val context = LocalContext.current.applicationContext
   val step by Onboarding.step.collectAsStateWithLifecycle()
   val current = step ?: return
   // Capture already on (or turned on through the prompt): move on.
-  LaunchedEffect(current, capturing) { if (current == TourStep.CAPTURE && capturing) Onboarding.go(TourStep.PARTY_TILE) }
+  LaunchedEffect(current, capturing) { if (current == TourStep.CAPTURE && capturing) Onboarding.go(TourStep.SPRITES) }
 
   val targetName =
     when (current) {
       TourStep.CAPTURE -> "lens"
-      TourStep.PARTY_TILE -> "tile_PARTY"
+      TourStep.PARTY -> "tile_PARTY"
       else -> null
     }
   val target = targetName?.let { Onboarding.targets[it] }
@@ -128,9 +128,9 @@ fun TourOverlay(capturing: Boolean, partyCount: Int, onStartCapture: () -> Unit,
           if (hole != null && hole.contains(p)) {
             when (current) {
               TourStep.CAPTURE -> onStartCapture()
-              TourStep.PARTY_TILE -> {
+              TourStep.PARTY -> {
                 onOpenParty()
-                Onboarding.go(TourStep.PARTY_READ)
+                Onboarding.finish(context)
               }
               else -> {}
             }
@@ -161,12 +161,12 @@ fun TourOverlay(capturing: Boolean, partyCount: Int, onStartCapture: () -> Unit,
       val y = (hole.bottom + with(density) { (6 + 10 * bounce.value).dp.toPx() }).roundToInt()
       Text("👆", fontSize = 40.sp, modifier = Modifier.offset { IntOffset(x, y) })
     }
-    Bubble(current, capturing, partyCount, onTheme, context, Modifier.align(Alignment.BottomCenter).padding(16.dp))
+    Bubble(current, capturing, onTheme, onOpenParty, context, Modifier.align(Alignment.BottomCenter).padding(16.dp))
   }
 }
 
 @Composable
-private fun Bubble(step: TourStep, capturing: Boolean, partyCount: Int, onTheme: (Int) -> Unit, context: Context, modifier: Modifier) {
+private fun Bubble(step: TourStep, capturing: Boolean, onTheme: (Int) -> Unit, onOpenParty: () -> Unit, context: Context, modifier: Modifier) {
   val scope = rememberCoroutineScope()
   var download by remember { mutableStateOf<String?>(null) }
   val outline = DexColors.palette.tileOutline
@@ -185,19 +185,18 @@ private fun Bubble(step: TourStep, capturing: Boolean, partyCount: Int, onTheme:
           "Welcome!" to
             "Tap the lens to start watching the game screen. Android will ask to allow screen capture: choose the " +
               "entire screen. Nothing is saved or uploaded."
-        TourStep.PARTY_TILE -> "Read your party" to "Tap Party to tell the app about your Pokémon."
-        TourStep.PARTY_READ ->
-          "Read your party" to
-            "Tap Read party, then in PokeMMO open your first Pokémon's Summary and page through its tabs (Stats, EVs, " +
-              "IVs, Moves), about a second each. Do the same for each Pokémon, then tap Done reading. If something " +
-              "won't read, tap a Pokémon and use Edit." + if (partyCount > 0) "\n\n$partyCount read so far." else ""
         TourStep.SPRITES ->
           "Pokémon sprites" to "Download pictures of all 649 Pokémon for the Pokédex, party and battles (one time, needs internet)."
         TourStep.THEME -> "Pick a look" to "Choose a theme. You can change it any time in Tools → Settings."
-        TourStep.DONE ->
-          "You're set!" to
+        TourStep.TIPS ->
+          "Where things are" to
             "Battle Assistant opens by itself in battles. The Poké Ball is the Pokédex (Here shows what spawns where " +
               "you are: just open the game's menu). Tools has berries, breeding, egg moves, GTL prices and settings."
+        TourStep.PARTY ->
+          "Last step: read your party" to
+            "The battle tips need your Pokémon. After this, Party opens: tap Read party, then in PokeMMO open your " +
+              "first Pokémon's Summary and page through its tabs (Stats, EVs, IVs, Moves), about a second each. Do " +
+              "the same for each Pokémon, then tap Done reading. If something won't read, tap a Pokémon and use Edit."
       }
     Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = DexColors.Ink)
     Text(body, style = MaterialTheme.typography.bodyMedium, color = DexColors.Ink)
@@ -208,14 +207,12 @@ private fun Bubble(step: TourStep, capturing: Boolean, partyCount: Int, onTheme:
     }
     download?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = DexColors.InkMuted) }
     Row(verticalAlignment = Alignment.CenterVertically) {
-      if (step != TourStep.DONE) {
+      if (step != TourStep.PARTY) {
         TextButton(onClick = { Onboarding.finish(context) }) { Text("Skip tour") }
       }
       Box(Modifier.weight(1f))
       when (step) {
-        TourStep.CAPTURE -> if (capturing) Button(onClick = { Onboarding.go(TourStep.PARTY_TILE) }) { Text("Next") }
-        TourStep.PARTY_TILE -> TextButton(onClick = { Onboarding.go(TourStep.SPRITES) }) { Text("Later") }
-        TourStep.PARTY_READ -> Button(onClick = { Onboarding.go(TourStep.SPRITES) }) { Text("Next") }
+        TourStep.CAPTURE -> if (capturing) Button(onClick = { Onboarding.go(TourStep.SPRITES) }) { Text("Next") }
         TourStep.SPRITES -> {
           TextButton(onClick = { Onboarding.go(TourStep.THEME) }) { Text(if (download == null) "Later" else "Next") }
           if (download == null) {
@@ -232,8 +229,19 @@ private fun Bubble(step: TourStep, capturing: Boolean, partyCount: Int, onTheme:
             }
           }
         }
-        TourStep.THEME -> Button(onClick = { Onboarding.go(TourStep.DONE) }) { Text("Next") }
-        TourStep.DONE -> Button(onClick = { Onboarding.finish(context) }) { Text("Done") }
+        TourStep.THEME -> Button(onClick = { Onboarding.go(TourStep.TIPS) }) { Text("Next") }
+        TourStep.TIPS -> Button(onClick = { Onboarding.go(TourStep.PARTY) }) { Text("Next") }
+        TourStep.PARTY -> {
+          TextButton(onClick = { Onboarding.finish(context) }) { Text("Later") }
+          Button(
+            onClick = {
+              onOpenParty()
+              Onboarding.finish(context)
+            }
+          ) {
+            Text("Okay, let's go")
+          }
+        }
       }
     }
   }

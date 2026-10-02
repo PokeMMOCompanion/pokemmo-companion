@@ -93,16 +93,8 @@ fun DexFrame(
       Light(lights.second, DexColors.LightAmber)
       Light(lights.third, DexColors.LightGreen)
       Spacer(Modifier.weight(1f))
-      // While not capturing, the status itself is the start button.
       Text(
         status,
-        modifier =
-          if (capturing) Modifier
-          else
-            Modifier.clip(RoundedCornerShape(8.dp))
-              .border(2.dp, DexColors.ShellText.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
-              .clickable(onClick = onCapture)
-              .padding(horizontal = 10.dp, vertical = 6.dp),
         style = smashText(DexColors.ShellText, DexColors.palette.tileOutline.copy(alpha = 0.6f), 15),
       )
     }

@@ -92,7 +92,7 @@ fun MainScreen() {
 
   val status =
     when {
-      !state.running -> "Tap here to start"
+      !state.running -> "Not capturing"
       state.partyReading -> "Reading party"
       state.screenState == ScreenState.BATTLE -> "In battle"
       state.screenState == ScreenState.OVERWORLD -> "Overworld"
@@ -160,7 +160,6 @@ fun MainScreen() {
       // First-run tour, above everything.
       TourOverlay(
         capturing = state.running,
-        partyCount = party.members.count { it != null },
         onStartCapture = startCapture,
         onOpenParty = { go(DexSection.PARTY) },
         onTheme = { i -> applyTheme(context, DexThemes.ALL[i]) },

@@ -51,7 +51,7 @@ The source code is right here if you want to check.
 1. Download the latest APK from [Releases](../../releases/latest) and open it on your device to install (Android will
    ask you to allow installs from your browser or file manager).
 2. Put the app on the bottom screen, PokeMMO on the top screen.
-3. Tap **"Tap here to start"** (or the lens) and allow screen capture of the **entire screen**.
+3. Tap the **lens** (top left) and allow screen capture of the **entire screen**.
 4. Party → **Read party**, then open each Pokémon's summary in the game and page through its tabs.
 5. Optional: Tools → Settings → Pokémon sprites → **Download**.
 
