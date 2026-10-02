@@ -13,8 +13,8 @@ android {
         applicationId = "com.pokemmocompanion.app"
         minSdk = 29
         targetSdk = 37
-        versionCode = 70
-        versionName = "0.70"
+        versionCode = 71
+        versionName = "0.71"
         // The AYN Thor is arm64; skip other ABIs to keep ML Kit's native libs small.
         ndk { abiFilters += "arm64-v8a" }
     }
