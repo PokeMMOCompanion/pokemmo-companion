@@ -38,6 +38,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.pokemmocompanion.app.ui.tourTarget
 
 /** The four places on the Home screen (plus Home itself). */
 enum class DexSection(val label: String, val icon: TileIcon, private val colorIndex: Int, val tileLabel: String = label) {
@@ -87,7 +88,7 @@ fun DexFrame(
     verticalArrangement = Arrangement.spacedBy(10.dp),
   ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-      CaptureLens(capturing, 52.dp, onClick = onCapture)
+      CaptureLens(capturing, 52.dp, modifier = Modifier.tourTarget("lens"), onClick = onCapture)
       Light(lights.first, DexColors.LightRed)
       Light(lights.second, DexColors.LightAmber)
       Light(lights.third, DexColors.LightGreen)

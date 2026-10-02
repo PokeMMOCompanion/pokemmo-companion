@@ -7,6 +7,8 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -101,61 +103,80 @@ fun MainScreen() {
     autoOpened = false // a manual choice sticks
   }
   val startCapture = rememberCaptureStarter()
+  LaunchedEffect(Unit) { Onboarding.startIfFirstRun(context) }
+  val touring by Onboarding.step.collectAsStateWithLifecycle()
   DexTheme {
-    // Silent unless a newer release is out.
-    AutoUpdatePrompt()
-    DexFrame(
-      status = status,
-      lights = Triple(state.screenState == ScreenState.BATTLE, state.partyReading, state.running),
-      capturing = state.running,
-      onCapture = { if (state.running) CaptureService.stop(context) else startCapture() },
-      // Home fills the screen exactly; the Pokédex and Tools scroll their own lists.
-      scrollable = section != null && section != DexSection.POKEDEX && section != DexSection.TOOLS,
-      contentKey = section,
-    ) {
-      val current = section
-      if (current == null) {
-        Home(state, party.members.filterNotNull(), onOpen = go)
-      } else {
-        SectionHeader(current.label, current.icon, current.color, onHome = { go(null) })
-        // Capture is the switch for everything else: offer it until it's on.
-        if (!state.running && current in setOf(DexSection.PARTY, DexSection.BATTLE)) CaptureCard()
-        when (current) {
-          DexSection.PARTY -> PartyCard()
-          DexSection.BATTLE -> {
-            if (state.screenState == ScreenState.BATTLE) {
-              if (state.opponentDown) {
-                Text("Opponent fainted — battle ending.", style = MaterialTheme.typography.bodySmall, color = DexColors.InkMuted)
+    // Silent unless a newer release is out (and never on top of the first-run tour).
+    if (touring == null) AutoUpdatePrompt()
+    Box(Modifier.fillMaxSize()) {
+      DexFrame(
+        status = status,
+        lights = Triple(state.screenState == ScreenState.BATTLE, state.partyReading, state.running),
+        capturing = state.running,
+        onCapture = { if (state.running) CaptureService.stop(context) else startCapture() },
+        // Home fills the screen exactly; the Pokédex and Tools scroll their own lists.
+        scrollable = section != null && section != DexSection.POKEDEX && section != DexSection.TOOLS,
+        contentKey = section,
+      ) {
+        val current = section
+        if (current == null) {
+          Home(state, party.members.filterNotNull(), onOpen = go)
+        } else {
+          SectionHeader(current.label, current.icon, current.color, onHome = { go(null) })
+          // Capture is the switch for everything else: offer it until it's on.
+          if (!state.running && current in setOf(DexSection.PARTY, DexSection.BATTLE)) CaptureCard()
+          when (current) {
+            DexSection.PARTY -> PartyCard()
+            DexSection.BATTLE -> {
+              if (state.screenState == ScreenState.BATTLE) {
+                if (state.opponentDown) {
+                  Text("Opponent fainted — battle ending.", style = MaterialTheme.typography.bodySmall, color = DexColors.InkMuted)
+                } else {
+                  state.currentBattle?.let { OpponentHeader(it.mons) }
+                  CatchButton(state)
+                  RevealedCard(state)
+                  BattleCalcCard(state)
+                }
               } else {
-                state.currentBattle?.let { OpponentHeader(it.mons) }
-                CatchButton(state)
-                RevealedCard(state)
-                BattleCalcCard(state)
+                Text("No battle right now.", style = MaterialTheme.typography.bodySmall, color = DexColors.InkMuted)
               }
-            } else {
-              Text("No battle right now.", style = MaterialTheme.typography.bodySmall, color = DexColors.InkMuted)
+              BattleLogCard(state.battleLog, inBattle = state.screenState == ScreenState.BATTLE)
+              TeamBuilderButton()
             }
-            BattleLogCard(state.battleLog, inBattle = state.screenState == ScreenState.BATTLE)
-            TeamBuilderButton()
+            DexSection.POKEDEX -> PokedexScreen(Modifier.weight(1f))
+            DexSection.QUESTS -> QuestScreen()
+            DexSection.TOOLS ->
+              ToolsScreen(Modifier.weight(1f), encounters = { EncountersCard() }) {
+                ThemePicker()
+                SpritesCard()
+                AlertsCard()
+                UpdatesCard()
+                PrivacyCard()
+                OutlinedButton(onClick = { Onboarding.restart() }) { Text("Show the tour again") }
+              }
           }
-          DexSection.POKEDEX -> PokedexScreen(Modifier.weight(1f))
-          DexSection.QUESTS -> QuestScreen()
-          DexSection.TOOLS ->
-            ToolsScreen(Modifier.weight(1f), encounters = { EncountersCard() }) {
-              ThemePicker()
-              SpritesCard()
-              AlertsCard()
-              UpdatesCard()
-              PrivacyCard()
-            }
         }
       }
+      // First-run tour, above everything.
+      TourOverlay(
+        capturing = state.running,
+        partyCount = party.members.count { it != null },
+        onStartCapture = startCapture,
+        onOpenParty = { go(DexSection.PARTY) },
+        onTheme = { i -> applyTheme(context, DexThemes.ALL[i]) },
+      )
     }
   }
 }
 
 private const val PREFS = "ui"
 private const val THEME_KEY = "theme"
+
+/** Switches the theme now and remembers it. */
+fun applyTheme(context: android.content.Context, t: com.pokemmocompanion.app.ui.dex.DexPalette) {
+  DexColors.palette = t
+  context.getSharedPreferences(PREFS, 0).edit().putString(THEME_KEY, t.name).apply()
+}
 
 /** The DS-style Home screen: four corner tiles around the Pokédex button. */
 @Composable
@@ -201,10 +222,7 @@ private fun ThemePicker() {
                 .clip(RoundedCornerShape(6.dp))
                 .background(t.shell)
                 .border(if (on) 3.dp else 1.dp, t.tileOutline, RoundedCornerShape(6.dp))
-                .clickable {
-                  DexColors.palette = t
-                  context.getSharedPreferences(PREFS, 0).edit().putString(THEME_KEY, t.name).apply()
-                }
+                .clickable { applyTheme(context, t) }
                 .padding(vertical = 10.dp),
             color = t.shellText,
             fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,

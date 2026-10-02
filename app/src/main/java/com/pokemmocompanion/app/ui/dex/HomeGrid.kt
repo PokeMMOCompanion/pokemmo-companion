@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pokemmocompanion.app.ui.tourTarget
 
 /** One Home tile: label, status tag, color, icon and what tapping it does. */
 data class HomeTile(val label: String, val status: String, val color: Color, val icon: TileIcon, val onClick: () -> Unit)
@@ -105,7 +106,8 @@ fun HomeGrid(tiles: List<HomeTile>, onCenter: () -> Unit, modifier: Modifier = M
         t,
         corner,
         Modifier.size(tileWidth, tileHeight)
-          .offset(x = if (corner.left) 0.dp else tileWidth + gap, y = if (corner.top) 0.dp else tileHeight + gap),
+          .offset(x = if (corner.left) 0.dp else tileWidth + gap, y = if (corner.top) 0.dp else tileHeight + gap)
+          .tourTarget("tile_" + t.icon.name),
         gap,
         button / 2 + ring,
         clock,
