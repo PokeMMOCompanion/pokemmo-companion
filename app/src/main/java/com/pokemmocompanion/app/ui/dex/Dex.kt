@@ -12,15 +12,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -79,14 +82,14 @@ object DexThemes {
       name = "RetroGB",
       shell = Color(0xFF8B8B9E),
       shellDark = Color(0xFF5E5E72),
-      shellText = Color(0xFF2C2C3A),
+      shellText = Color(0xFF14141C),
       shellMuted = Color(0xFFE2E2EA),
       bezel = Color(0xFF4A4A5A),
       screen = Color(0xFF9BBC0F),
       screenDots = Color(0xFF8BAC0F),
-      ink = Color(0xFF0F380F),
-      inkMuted = Color(0xFF306230),
-      inkFaint = Color(0xFF3E6B2E),
+      ink = Color(0xFF051A05),
+      inkMuted = Color(0xFF0F380F),
+      inkFaint = Color(0xFF1E461E),
       track = Color(0xFF8BAC0F),
       lens = Color(0xFF7A1F5C),
       lensRim = Color(0xFFC9C9D6),
@@ -206,9 +209,9 @@ object DexThemes {
       bezel = Color(0xFF2E2E2E),
       screen = Color(0xFF000000),
       screenDots = Color(0xFF0E0E0E),
-      ink = Color(0xFFEDEDED),
-      inkMuted = Color(0xFFB4B4B4),
-      inkFaint = Color(0xFF8A8A8A),
+      ink = Color(0xFFFFFFFF),
+      inkMuted = Color(0xFFD6D6D6),
+      inkFaint = Color(0xFFB8B8B8),
       track = Color(0xFF2E2E2E),
       lens = Color(0xFFDC0A2D),
       lensRim = Color(0xFF5A5A5A),
@@ -266,8 +269,8 @@ fun DexTheme(content: @Composable () -> Unit) {
   val scheme =
     if (p.dark)
       darkColorScheme(
-        primary = DexColors.You,
-        onPrimary = Color.Black,
+        primary = Color(0xFF2F6FC0),
+        onPrimary = Color.White,
         secondary = DexColors.ShellDark,
         tertiary = DexColors.Teal,
         error = DexColors.Foe,
@@ -278,6 +281,9 @@ fun DexTheme(content: @Composable () -> Unit) {
         outline = DexColors.InkMuted,
         surfaceVariant = DexColors.Screen,
         onSurfaceVariant = DexColors.InkMuted,
+        surfaceContainerHigh = Color(0xFF1C1C1C),
+        surfaceContainerHighest = Color(0xFF242424),
+        onSecondary = Color.White,
       )
     else
       lightColorScheme(
@@ -312,7 +318,10 @@ fun DexTheme(content: @Composable () -> Unit) {
       labelSmall = base.labelSmall.copy(fontSize = if (hc) 13.sp else 11.sp, fontWeight = if (hc) FontWeight.SemiBold else base.labelSmall.fontWeight),
       labelMedium = if (hc) base.labelMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold) else base.labelMedium,
     )
-  MaterialTheme(colorScheme = scheme, typography = typography, content = content)
+  // Text without its own color uses the theme's ink (Compose's default is black, unreadable on dark themes).
+  MaterialTheme(colorScheme = scheme, typography = typography) {
+    CompositionLocalProvider(LocalContentColor provides DexColors.Ink, content = content)
+  }
 }
 
 /**
@@ -338,12 +347,18 @@ fun DexBar(fraction: Float, color: Color, modifier: Modifier = Modifier) {
   }
 }
 
+/** Chip colors for the theme: on dark themes, light-fill/dark-text chips flip to dark fill and light text. */
+fun chipColors(background: Color, foreground: Color): Pair<Color, Color> =
+  if (DexColors.palette.dark && foreground.luminance() < background.luminance()) foreground to background
+  else background to foreground
+
 @Composable
 fun DexChip(text: String, background: Color, foreground: Color) {
+  val (bg, fg) = chipColors(background, foreground)
   Text(
     text,
-    modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(background).padding(horizontal = 6.dp, vertical = 1.dp),
-    color = foreground,
+    modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(bg).padding(horizontal = 6.dp, vertical = 1.dp),
+    color = fg,
     style = MaterialTheme.typography.labelSmall,
   )
 }

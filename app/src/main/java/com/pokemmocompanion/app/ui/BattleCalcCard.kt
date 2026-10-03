@@ -33,6 +33,7 @@ import com.pokemmocompanion.app.calc.SpeedVerdict
 import com.pokemmocompanion.app.calc.Stat
 import com.pokemmocompanion.app.capture.CaptureState
 import com.pokemmocompanion.app.party.PartyRepository
+import com.pokemmocompanion.app.ui.dex.chipColors
 import com.pokemmocompanion.app.ui.dex.DexBar
 import com.pokemmocompanion.app.ui.dex.DexChip
 import com.pokemmocompanion.app.ui.dex.DexColors
@@ -169,9 +170,9 @@ private fun FieldLine(f: FieldState) {
 private fun SpeedBanner(s: SpeedVerdict) {
   val (bg, fg) =
     when (s.order) {
-      MoveOrder.YOU_FIRST -> Color(0xFFC0DD97) to Color(0xFF27500A)
-      MoveOrder.DEPENDS -> Color(0xFFFAC775) to Color(0xFF633806)
-      MoveOrder.IT_FIRST -> Color(0xFFF7C1C1) to Color(0xFF791F1F)
+      MoveOrder.YOU_FIRST -> chipColors(Color(0xFFC0DD97), Color(0xFF27500A))
+      MoveOrder.DEPENDS -> chipColors(Color(0xFFFAC775), Color(0xFF633806))
+      MoveOrder.IT_FIRST -> chipColors(Color(0xFFF7C1C1), Color(0xFF791F1F))
     }
   Column(
     Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp)).background(bg).padding(horizontal = 10.dp, vertical = 6.dp)

@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.Alignment
+import com.pokemmocompanion.app.ui.dex.DexColors
 import com.pokemmocompanion.app.ui.dex.SpriteIcon
 import com.pokemmocompanion.app.ui.dex.TypeChip
 import androidx.compose.foundation.layout.Column
@@ -94,7 +95,7 @@ private fun OpponentEntry(p: OpponentProfile, count: Int) {
     Text(
       "Weak to: " + p.weaknesses.joinToString { (t, m) -> "${t.label} ×${multiplier(m)}" },
       style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.primary,
+      color = DexColors.You,
     )
   }
   if (p.resistances.isNotEmpty()) {

@@ -71,7 +71,7 @@ fun PartyCard() {
             "In PokeMMO, open each Pokémon's Summary. Start on the first tab (Pokédex/Name/Nature), then go " +
               "through Stats, EVs, IVs and Moves, about a second per tab.\n" + (capture.partyStatus?.let { "Last read: $it" } ?: "Waiting for a summary screen…"),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary,
+            color = DexColors.You,
           )
       }
       val members = party.members.filterNotNull()
@@ -149,6 +149,6 @@ private fun MemberEntry(m: PartyMember, onEdit: () -> Unit) {
     "Info ${check(m.hasInfo)}  Stats ${check(m.stats != null)}  EVs ${check(m.evs != null)}  " +
       "IVs ${check(m.ivs != null)}  Moves ${check(m.moves.isNotEmpty())}",
     style = small,
-    color = if (m.isReady) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+    color = if (m.isReady) DexColors.You else MaterialTheme.colorScheme.outline,
   )
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import com.pokemmocompanion.app.ui.dex.DexColors
 import com.pokemmocompanion.app.ui.dex.DexPanel as Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,7 +46,7 @@ fun BattleLogCard(all: List<BattleEvent>, inBattle: Boolean) {
             color =
               when {
                 "missed" in e.outcomes || "no effect" in e.outcomes || "failed" in e.outcomes -> MaterialTheme.colorScheme.outline
-                e.side == Side.YOU -> MaterialTheme.colorScheme.primary
+                e.side == Side.YOU -> DexColors.You
                 else -> MaterialTheme.colorScheme.error
               },
           )
