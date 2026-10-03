@@ -14,7 +14,7 @@ android {
         minSdk = 29
         targetSdk = 37
         versionCode = 102
-        versionName = "1.1.1"
+        versionName = "1.01"
         // The AYN Thor is arm64; skip other ABIs to keep ML Kit's native libs small.
         ndk { abiFilters += "arm64-v8a" }
     }
