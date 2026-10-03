@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,6 +47,10 @@ data class DexPalette(
   val tiles: List<Color>,
   val tileOutline: Color,
   val tileText: Color,
+  /** Light text on a dark screen (status colors switch to lighter shades). */
+  val dark: Boolean = false,
+  /** Darker status colors and larger, bolder small text. */
+  val highContrast: Boolean = false,
 )
 
 object DexThemes {
@@ -170,7 +175,49 @@ object DexThemes {
       tileOutline = Color(0xFF4A1531),
       tileText = Color(0xFFFFFFFF),
     )
-  val ALL = listOf(CLASSIC_RED, RETRO, MODERN_BLUE, ROYAL_PURPLE, SUNNY_YELLOW, PRETTY_PINK)
+  val HIGH_CONTRAST =
+    DexPalette(
+      name = "High contrast",
+      shell = Color(0xFF000000),
+      shellDark = Color(0xFF2B2B2B),
+      shellText = Color(0xFFFFFFFF),
+      shellMuted = Color(0xFFFFE600),
+      bezel = Color(0xFFFFFFFF),
+      screen = Color(0xFFFFFFFF),
+      screenDots = Color(0xFFFFFFFF),
+      ink = Color(0xFF000000),
+      inkMuted = Color(0xFF1A1A1A),
+      inkFaint = Color(0xFF383838),
+      track = Color(0xFFB0B0B0),
+      lens = Color(0xFFFFE600),
+      lensRim = Color(0xFFFFFFFF),
+      tiles = listOf(Color(0xFFB00020), Color(0xFF8A4500), Color(0xFF00594F), Color(0xFF0B3D91)),
+      tileOutline = Color(0xFF000000),
+      tileText = Color(0xFFFFFFFF),
+      highContrast = true,
+    )
+  val OLED_BLACK =
+    DexPalette(
+      name = "OLED black",
+      shell = Color(0xFF000000),
+      shellDark = Color(0xFF1C1C1C),
+      shellText = Color(0xFFF2F2F2),
+      shellMuted = Color(0xFFB8B8B8),
+      bezel = Color(0xFF2E2E2E),
+      screen = Color(0xFF000000),
+      screenDots = Color(0xFF0E0E0E),
+      ink = Color(0xFFEDEDED),
+      inkMuted = Color(0xFFB4B4B4),
+      inkFaint = Color(0xFF8A8A8A),
+      track = Color(0xFF2E2E2E),
+      lens = Color(0xFFDC0A2D),
+      lensRim = Color(0xFF5A5A5A),
+      tiles = listOf(Color(0xFFB3261E), Color(0xFFB86E00), Color(0xFF0F7A5A), Color(0xFF1F5FA8)),
+      tileOutline = Color(0xFF3A3A3A),
+      tileText = Color(0xFFFFFFFF),
+      dark = true,
+    )
+  val ALL = listOf(CLASSIC_RED, RETRO, MODERN_BLUE, ROYAL_PURPLE, SUNNY_YELLOW, PRETTY_PINK, HIGH_CONTRAST, OLED_BLACK)
 }
 
 /**
@@ -193,14 +240,19 @@ object DexColors {
   val Track get() = palette.track
   val Lens get() = palette.lens
   val LensRim get() = palette.lensRim
-  val You = Color(0xFF185FA5)
-  val YouLight = Color(0xFF85B7EB)
-  val Foe = Color(0xFFA32D2D)
+  // Status colors: lighter on dark screens, darker in high contrast.
+  private fun pick(normal: Long, dark: Long, contrast: Long) =
+    Color(if (palette.dark) dark else if (palette.highContrast) contrast else normal)
+  val You get() = pick(0xFF185FA5, 0xFF85B7EB, 0xFF0B3D91)
+  val YouLight get() = pick(0xFF85B7EB, 0xFF4F8FD0, 0xFF4F7FC0)
+  val Foe get() = pick(0xFFA32D2D, 0xFFFF7A7A, 0xFF8B0000)
   val FoeBar = Color(0xFFE24B4A)
-  val Good = Color(0xFF639922)
-  val Warn = Color(0xFFEF9F27)
-  val Bad = Color(0xFFE24B4A)
-  val Teal = Color(0xFF0F6E56)
+  val Good get() = pick(0xFF639922, 0xFF97C459, 0xFF2E6B0A)
+  val Warn get() = pick(0xFFEF9F27, 0xFFFFB84D, 0xFF9A4A00)
+  /** Background for chips with black text ("NEED", horde size): always the bright amber. */
+  val WarnFill = Color(0xFFEF9F27)
+  val Bad get() = pick(0xFFE24B4A, 0xFFFF7A7A, 0xFFB00020)
+  val Teal get() = pick(0xFF0F6E56, 0xFF5DCAA5, 0xFF00594F)
   val LightRed = Color(0xFFE24B4A)
   val LightAmber = Color(0xFFEF9F27)
   val LightGreen = Color(0xFF8FD14F)
@@ -210,27 +262,55 @@ object DexColors {
 /** Material colors mapped onto the Pokédex screen, so existing components pick up the look. */
 @Composable
 fun DexTheme(content: @Composable () -> Unit) {
+  val p = DexColors.palette
   val scheme =
-    lightColorScheme(
-      primary = DexColors.You,
-      onPrimary = Color.White,
-      secondary = DexColors.ShellDark,
-      tertiary = DexColors.Teal,
-      error = DexColors.Foe,
-      background = DexColors.Shell,
-      surface = DexColors.Screen,
-      onSurface = DexColors.Ink,
-      onBackground = DexColors.Ink,
-      outline = DexColors.InkMuted,
-      surfaceVariant = DexColors.Screen,
-    )
+    if (p.dark)
+      darkColorScheme(
+        primary = DexColors.You,
+        onPrimary = Color.Black,
+        secondary = DexColors.ShellDark,
+        tertiary = DexColors.Teal,
+        error = DexColors.Foe,
+        background = DexColors.Shell,
+        surface = DexColors.Screen,
+        onSurface = DexColors.Ink,
+        onBackground = DexColors.Ink,
+        outline = DexColors.InkMuted,
+        surfaceVariant = DexColors.Screen,
+        onSurfaceVariant = DexColors.InkMuted,
+      )
+    else
+      lightColorScheme(
+        primary = DexColors.You,
+        onPrimary = Color.White,
+        secondary = DexColors.ShellDark,
+        tertiary = DexColors.Teal,
+        error = DexColors.Foe,
+        background = DexColors.Shell,
+        surface = DexColors.Screen,
+        onSurface = DexColors.Ink,
+        onBackground = DexColors.Ink,
+        outline = DexColors.InkMuted,
+        surfaceVariant = DexColors.Screen,
+        onSurfaceVariant = if (p.highContrast) DexColors.Ink else lightColorScheme().onSurfaceVariant,
+      )
   val base = Typography()
+  // High contrast: small text a bit larger and heavier.
+  val hc = p.highContrast
   val typography =
     base.copy(
       // Section titles: small, spaced, muted, like the mockup's headers.
-      titleSmall = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.6.sp, color = DexColors.InkMuted),
-      bodySmall = base.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
-      labelSmall = base.labelSmall.copy(fontSize = 11.sp),
+      titleSmall =
+        TextStyle(
+          fontSize = if (hc) 13.sp else 11.sp,
+          fontWeight = if (hc) FontWeight.Bold else FontWeight.Medium,
+          letterSpacing = 0.6.sp,
+          color = DexColors.InkMuted,
+        ),
+      bodySmall = base.bodySmall.copy(fontSize = if (hc) 14.sp else 12.sp, lineHeight = if (hc) 19.sp else 17.sp, fontWeight = if (hc) FontWeight.Medium else null),
+      bodyMedium = if (hc) base.bodyMedium.copy(fontSize = 15.sp, fontWeight = FontWeight.Medium) else base.bodyMedium,
+      labelSmall = base.labelSmall.copy(fontSize = if (hc) 13.sp else 11.sp, fontWeight = if (hc) FontWeight.SemiBold else base.labelSmall.fontWeight),
+      labelMedium = if (hc) base.labelMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold) else base.labelMedium,
     )
   MaterialTheme(colorScheme = scheme, typography = typography, content = content)
 }

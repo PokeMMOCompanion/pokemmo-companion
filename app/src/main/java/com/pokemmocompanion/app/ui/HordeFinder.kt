@@ -118,7 +118,7 @@ private fun SpotCard(spot: HordeSpot, onOpen: (Int) -> Unit) {
         Text(spot.place, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
         Text(spot.region, style = MaterialTheme.typography.labelSmall, color = DexColors.InkMuted)
       }
-      DexChip("×${spot.size}", DexColors.Warn, Color.Black)
+      DexChip("×${spot.size}", DexColors.WarnFill, Color.Black)
       DexChip(spot.method, DexColors.Track, DexColors.Ink)
     }
     Text(

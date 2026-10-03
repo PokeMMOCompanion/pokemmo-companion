@@ -211,8 +211,8 @@ private fun ThemePicker() {
   Card(modifier = Modifier.fillMaxWidth()) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
       Text("THEME", style = MaterialTheme.typography.titleSmall)
-      // Two rows of three.
-      for (rowThemes in DexThemes.ALL.chunked(3)) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      // Rows of two.
+      for (rowThemes in DexThemes.ALL.chunked(2)) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         for (t in rowThemes) {
           val on = DexColors.palette == t
           Text(
@@ -221,7 +221,7 @@ private fun ThemePicker() {
               Modifier.weight(1f)
                 .clip(RoundedCornerShape(6.dp))
                 .background(t.shell)
-                .border(if (on) 3.dp else 1.dp, t.tileOutline, RoundedCornerShape(6.dp))
+                .border(if (on) 3.dp else 1.dp, if (on) DexColors.Ink else t.tileOutline, RoundedCornerShape(6.dp))
                 .clickable { applyTheme(context, t) }
                 .padding(vertical = 10.dp),
             color = t.shellText,

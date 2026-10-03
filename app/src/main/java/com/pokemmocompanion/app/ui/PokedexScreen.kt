@@ -197,7 +197,7 @@ fun CaughtMark(caught: Boolean?) {
       drawCircle(Color(0xFFE3350D), size.minDimension / 2)
       drawRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(0f, size.height * 0.45f), size = androidx.compose.ui.geometry.Size(size.width, size.height * 0.1f))
     }
-    false -> DexChip("NEED", DexColors.Warn, Color.Black)
+    false -> DexChip("NEED", DexColors.WarnFill, Color.Black)
     null -> {}
   }
 }
@@ -345,7 +345,7 @@ private fun RegionSpawns(region: String, list: List<Spawn>) {
     Column(Modifier.fillMaxWidth().padding(start = 14.dp, bottom = 6.dp)) {
       Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(sp.place, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-        if (sp.horde > 0) DexChip("Horde ×${sp.horde}", DexColors.Warn, Color.Black)
+        if (sp.horde > 0) DexChip("Horde ×${sp.horde}", DexColors.WarnFill, Color.Black)
         DexChip(sp.method, DexColors.Track, DexColors.Ink)
       }
       Text(
